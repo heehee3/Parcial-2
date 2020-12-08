@@ -13,6 +13,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.persistence.Query;
 import javax.swing.JOptionPane;
@@ -34,12 +37,12 @@ public class Principal extends javax.swing.JFrame {
    SensorDAO daoS= new SensorDAO();
    TipoSensorDAO daoTS= new TipoSensorDAO();
    ArrayList<HistoricoDatos> listaH= new ArrayList<>();
+   
     public Principal() {
         initComponents();
         inicializacion();
     }
     public void inicializacion(){
-        
         ts.setTipo("LLAMA");
         ts.setNombre("Sensor de Llama");
         ts.setMinimo(34);
@@ -61,12 +64,12 @@ public class Principal extends javax.swing.JFrame {
             Class.forName("org.apache.derby.jdbc.ClientDriver");
             String url="jdbc:derby://localhost:1527/sensorAPP";
             Connection con= DriverManager.getConnection(url);
-            String query="SELECT * FROM HISTORICODATOS ORDER BY id DESC";
+            String query="SELECT * FROM HISTORICO ORDER BY id DESC";
             Statement st=con.createStatement();
             ResultSet rs= st.executeQuery(query);
             HistoricoDatos hd;
             while (rs.next()){
-                hd= new HistoricoDatos(rs.getInt("IDSENSOR"),rs.getDouble("VALOR"),rs.getDate("FECHAHORA"), rs.getInt("ID"));
+                hd= new HistoricoDatos(rs.getInt("IDSENSOR"),rs.getDouble("VALOR"),rs.getString("FECHAHORA"), rs.getInt("ID"));
                 listaH.add(hd); 
             }                
             
@@ -75,7 +78,24 @@ public class Principal extends javax.swing.JFrame {
         }
         return listaH;
         
-    }         
+    }  
+    public void llenar(){
+        DefaultTableModel model= (DefaultTableModel) jTable1.getModel();   
+        Object[] row= new Object[4];  
+        
+        int rowCount = model.getRowCount();
+            for(int i = 0; i < rowCount; i++){
+                model.removeRow(0);
+            } 
+        
+        for(int i=0;i<5;i++){
+            row[0]=listaH.get(i).getId();
+            row[1]=listaH.get(i).getIdsensor();
+            row[2]=listaH.get(i).getValor();
+            row[3]=listaH.get(i).getFechaHora();
+            model.addRow(row);           
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -89,6 +109,7 @@ public class Principal extends javax.swing.JFrame {
         jToolBar1 = new javax.swing.JToolBar();
         enviarDatobtn = new javax.swing.JButton();
         mostrarDatobtn = new javax.swing.JButton();
+        parcialbtn = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
 
@@ -117,6 +138,12 @@ public class Principal extends javax.swing.JFrame {
             }
         });
         jToolBar1.add(mostrarDatobtn);
+
+        parcialbtn.setText("Parcial");
+        parcialbtn.setFocusable(false);
+        parcialbtn.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        parcialbtn.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        jToolBar1.add(parcialbtn);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -181,27 +208,20 @@ public class Principal extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void mostrarDatobtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostrarDatobtnActionPerformed
+        jTable1.setVisible(true);
         lista();
-        DefaultTableModel model= (DefaultTableModel) jTable1.getModel();
-        Object[] row= new Object[4];
-        
-        for(int i=0;i<5;i++){
-            row[0]=listaH.get(i).getId();
-            row[1]=listaH.get(i).getIdsensor();
-            row[2]=listaH.get(i).getValor();
-            row[3]=listaH.get(i).getFechaHora();
-            model.addRow(row);           
-        }
+        llenar();
     }//GEN-LAST:event_mostrarDatobtnActionPerformed
 
     private void enviarDatobtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enviarDatobtnActionPerformed
         h.setIdsensor(s.getIdsensor());
         h.setValor(Math.random()*30 + 20);
-        h.setFechaHora(date);
+        h.setFechaHora(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(date));
         if(temp.verificarValor(h.getValor())==true){
             System.out.println(h.getId()+ " " +h.getIdsensor()+ " " +h.getValor()+ " " +h.getFechaHora());
-            daoHD.crear(h);
-        }                    
+            daoHD.crear(h);                    
+        }  
+        jTable1.setVisible(false);
     }//GEN-LAST:event_enviarDatobtnActionPerformed
 
     /**
@@ -246,5 +266,6 @@ public class Principal extends javax.swing.JFrame {
     private javax.swing.JTable jTable1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JButton mostrarDatobtn;
+    private javax.swing.JButton parcialbtn;
     // End of variables declaration//GEN-END:variables
 }

@@ -5,7 +5,6 @@
  */
 package Entidad;
 
-
 import java.util.*;
 import java.io.*;
 import javax.persistence.*;
@@ -15,17 +14,16 @@ import static javax.persistence.TemporalType.DATE;
  * @author Camilo
  */
 @Entity
-@Table(name="HistoricODatos")
+@Table(name="Historico")
 public class HistoricoDatos implements Serializable{
     public int idsensor;
     public double valor;
-    @Temporal(DATE)
-    public Date fechaHora;
+    public String fechaHora;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    public HistoricoDatos(int idsensor, double valor, Date fechaHora, int id) {
+    public HistoricoDatos(int idsensor, double valor, String fechaHora, int id) {
         this.idsensor = idsensor;
         this.valor = valor;
         this.fechaHora = fechaHora;
@@ -51,11 +49,11 @@ public class HistoricoDatos implements Serializable{
         this.valor = valor;
     }
 
-    public Date getFechaHora() {
+    public String getFechaHora() {
         return fechaHora;
     }
 
-    public void setFechaHora(Date fechaHora) {
+    public void setFechaHora(String fechaHora) {
         this.fechaHora = fechaHora;
     }
 
