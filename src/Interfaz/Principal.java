@@ -59,7 +59,8 @@ public class Principal extends javax.swing.JFrame {
         
     }
     
-    public ArrayList<HistoricoDatos> lista (){       
+    public ArrayList<HistoricoDatos> lista (){     
+        listaH.clear();
         try {
             Class.forName("org.apache.derby.jdbc.ClientDriver");
             String url="jdbc:derby://localhost:1527/sensorAPP";
