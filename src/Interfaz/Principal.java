@@ -175,7 +175,7 @@ public class Principal extends javax.swing.JFrame {
             }else if(opcionSI=="Alerta 2"){
                 JOptionPane.showConfirmDialog(null,"Entre el mínimo y el máximo: \n Valor promedio: "+ prom);
             }else if(opcionSI=="Alerta 3"){
-                JOptionPane.showConfirmDialog(null,"Superior al máximo permitido: \n \n Valor promedio: "+ prom);
+                JOptionPane.showConfirmDialog(null,"Superior al máximo permitido: \n Valor promedio: "+ prom);
             }
         }
     }
