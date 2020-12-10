@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package Interfaz;
 
 import Entidad.*;
@@ -16,7 +12,12 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
+import javafx.scene.control.Alert;
+import javafx.util.converter.LocalDateTimeStringConverter;
 import javax.persistence.Query;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -26,37 +27,48 @@ import javax.swing.table.DefaultTableModel;
  * @author Camilo
  */
 public class Principal extends javax.swing.JFrame {
-
+    
    HistoricoDatos h=new HistoricoDatos();
-   TipoSensor ts= new TipoSensor();
+   TipoSensor ts1= new TipoSensor();
+   TipoSensor ts2= new TipoSensor();
    Sensor s= new Sensor();
    Random num= new Random();
    Date date=new Date();
+   LocalDateTime dateSI;
    validarTS temp=new validarTS();
+   validarTS parcial=new validarTS();
+   String opcionNO=new String();
+   String opcionSI=new String();
    HistoricoDatosDAO daoHD= new HistoricoDatosDAO();
    SensorDAO daoS= new SensorDAO();
    TipoSensorDAO daoTS= new TipoSensorDAO();
    ArrayList<HistoricoDatos> listaH= new ArrayList<>();
+    ArrayList<Object> listaHSI= new ArrayList<>();
+   SimpleDateFormat formato = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+   double prom;
    
     public Principal() {
         initComponents();
         inicializacion();
     }
     public void inicializacion(){
-        ts.setTipo("LLAMA");
-        ts.setNombre("Sensor de Llama");
-        ts.setMinimo(34);
-        ts.setMaximo(37.5);
+        SIbtn.setEnabled(false);
+        NObtn.setEnabled(false);
+        ts1.setTipo("LLAMA");
+        ts1.setNombre("Sensor de Llama");
+        ts1.setMinimo(34);
+        ts1.setMaximo(37.5);
+        ts1.setNumHoras(2);                                 
         
-        s.setTipo(ts.getTipo());
+        s.setTipo(ts1.getTipo());
         s.setUbicacion("Central");
         s.setIdsensor(1);
-        
+        /*
         System.out.println("Sensor");
         System.out.println(s.getIdsensor() + " " + s.getUbicacion() + " " + s.getTipo());
         System.out.println("\n Tipo de Sensor");
-        System.out.println(ts.getTipo()+ " " + ts.getNombre() + " (" + ts.getMinimo() + " - " + ts.getMaximo()+")");
-        
+        System.out.println(ts1.getTipo()+ " " + ts1.getNombre() + " (" + ts1.getMinimo() + " - " + ts1.getMaximo() + " - " + ts1.getPromedio()+ " - " + ts1.getNumHoras()+")");        
+        daoTS.crear(ts1);*/
     }
     
     public ArrayList<HistoricoDatos> lista (){     
@@ -65,7 +77,7 @@ public class Principal extends javax.swing.JFrame {
             Class.forName("org.apache.derby.jdbc.ClientDriver");
             String url="jdbc:derby://localhost:1527/sensorAPP";
             Connection con= DriverManager.getConnection(url);
-            String query="SELECT * FROM HISTORICO ORDER BY id DESC";
+            String query="SELECT * FROM HISTORICOD ORDER BY id DESC";
             Statement st=con.createStatement();
             ResultSet rs= st.executeQuery(query);
             HistoricoDatos hd;
@@ -80,7 +92,33 @@ public class Principal extends javax.swing.JFrame {
         return listaH;
         
     }  
-    public void llenar(){
+  
+    public double listaSI (){     
+        try {
+            Class.forName("org.apache.derby.jdbc.ClientDriver");
+            String url="jdbc:derby://localhost:1527/sensorAPP";
+            Connection con= DriverManager.getConnection(url);
+            String query="SELECT AVG(VALOR) AS \"PROMEDIO\" FROM APP.HISTORICOD";
+            Statement st=con.createStatement();
+            ResultSet rs= st.executeQuery(query);
+            while (rs.next()){                
+                String query1="SELECT AVG(VALOR) AS PROMEDIO FROM APP.HISTORICOD WHERE FECHAHORA BETWEEN '2020-12-09 18:32:13.480' AND CURRENT_TIMESTAMP";
+                    Statement st1=con.createStatement();
+                    ResultSet rs1= st1.executeQuery(query1);
+                    while(rs1.next()){
+                        prom= rs1.getDouble("PROMEDIO");
+                    }               
+            }                
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, e);
+        }
+        return prom;
+        
+    }
+    
+    
+    public void llenarEnviar(){
         DefaultTableModel model= (DefaultTableModel) jTable1.getModel();   
         Object[] row= new Object[4];  
         
@@ -94,9 +132,54 @@ public class Principal extends javax.swing.JFrame {
             row[1]=listaH.get(i).getIdsensor();
             row[2]=listaH.get(i).getValor();
             row[3]=listaH.get(i).getFechaHora();
-            model.addRow(row);           
+            model.addRow(row);   
+            
         }
     }
+    
+    public void llenarProcsNO(){
+        
+        DefaultTableModel model= (DefaultTableModel) jTable1.getModel();   
+        Object[] row= new Object[4];  
+        
+        int rowCount = model.getRowCount();
+            for(int i = 0; i < rowCount; i++){
+                model.removeRow(0);
+            } 
+        
+        for(int i=0;i<1;i++){
+            row[0]=listaH.get(i).getId();
+            row[1]=listaH.get(i).getIdsensor();
+            row[2]=listaH.get(i).getValor();
+            row[3]=listaH.get(i).getFechaHora();
+            model.addRow(row); 
+            opcionNO=parcial.verificarValorProc(listaH.get(i).getValor());
+            System.out.println(parcial.verificarValorProc(listaH.get(i).getValor()));
+            if(opcionNO=="Alerta 1"){
+                JOptionPane.showConfirmDialog(null,"Inferior al mínimo permitido: \n Id: "+listaH.get(i).getId() +"\n Id Sensor: "+ listaH.get(i).getIdsensor() +"\n Valor: "+ listaH.get(i).getValor() +"\n Fecha y Hora: "+ listaH.get(i).getFechaHora());
+            }else if(opcionNO=="Alerta 2"){
+                JOptionPane.showConfirmDialog(null,"Entre el mínimo y el máximo: \n Id: "+listaH.get(i).getId() +"\n Id Sensor: "+ listaH.get(i).getIdsensor() +"\n Valor:"+ listaH.get(i).getValor() +"\n Fecha y Hora: "+ listaH.get(i).getFechaHora());
+            }else if(opcionNO=="Alerta 3"){
+                JOptionPane.showConfirmDialog(null,"Superior al máximo permitido: \n Id: "+listaH.get(i).getId() +"\n Id Sensor: "+ listaH.get(i).getIdsensor() +"\n Valor: "+ listaH.get(i).getValor() +"\n Fecha y Hora: "+ listaH.get(i).getFechaHora());
+            }                        
+        }
+    }
+    public void llenarProcsSI(){
+        
+        for(int i=0;i<1;i++){
+            
+            opcionSI=parcial.verificarValorProc(prom);
+            System.out.println(prom);
+            if(opcionSI=="Alerta 1"){
+                JOptionPane.showConfirmDialog(null,"Inferior al mínimo permitido: \n Valor promedio: "+ prom);
+            }else if(opcionSI=="Alerta 2"){
+                JOptionPane.showConfirmDialog(null,"Entre el mínimo y el máximo: \n Valor promedio: "+ prom);
+            }else if(opcionSI=="Alerta 3"){
+                JOptionPane.showConfirmDialog(null,"Superior al máximo permitido: \n \n Valor promedio: "+ prom);
+            }
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -113,6 +196,10 @@ public class Principal extends javax.swing.JFrame {
         parcialbtn = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
+        panel2 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        SIbtn = new javax.swing.JButton();
+        NObtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -140,10 +227,15 @@ public class Principal extends javax.swing.JFrame {
         });
         jToolBar1.add(mostrarDatobtn);
 
-        parcialbtn.setText("Parcial");
+        parcialbtn.setText("Procesamiento de Datos");
         parcialbtn.setFocusable(false);
         parcialbtn.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         parcialbtn.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        parcialbtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                parcialbtnActionPerformed(evt);
+            }
+        });
         jToolBar1.add(parcialbtn);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -181,6 +273,46 @@ public class Principal extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(jTable1);
 
+        jLabel1.setText("Promedio:");
+
+        SIbtn.setText("SI");
+        SIbtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SIbtnActionPerformed(evt);
+            }
+        });
+
+        NObtn.setText("NO");
+        NObtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NObtnActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout panel2Layout = new javax.swing.GroupLayout(panel2);
+        panel2.setLayout(panel2Layout);
+        panel2Layout.setHorizontalGroup(
+            panel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panel2Layout.createSequentialGroup()
+                .addGap(49, 49, 49)
+                .addComponent(jLabel1)
+                .addGap(18, 18, 18)
+                .addComponent(SIbtn)
+                .addGap(38, 38, 38)
+                .addComponent(NObtn)
+                .addContainerGap(114, Short.MAX_VALUE))
+        );
+        panel2Layout.setVerticalGroup(
+            panel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panel2Layout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addGroup(panel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(SIbtn)
+                    .addComponent(NObtn))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -189,11 +321,13 @@ public class Principal extends javax.swing.JFrame {
                 .addGap(21, 21, 21)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
                         .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGap(58, 58, 58))))
+                        .addGap(58, 58, 58))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(panel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addContainerGap())))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -201,7 +335,9 @@ public class Principal extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(panel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(21, 21, 21)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -211,19 +347,37 @@ public class Principal extends javax.swing.JFrame {
     private void mostrarDatobtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mostrarDatobtnActionPerformed
         jTable1.setVisible(true);
         lista();
-        llenar();
+        llenarEnviar();
+        
     }//GEN-LAST:event_mostrarDatobtnActionPerformed
 
     private void enviarDatobtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enviarDatobtnActionPerformed
         h.setIdsensor(s.getIdsensor());
-        h.setValor(Math.random()*30 + 20);
+        h.setValor(Math.random()*10 + 30);
         h.setFechaHora(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S").format(date));
         if(temp.verificarValor(h.getValor())==true){
             System.out.println(h.getId()+ " " +h.getIdsensor()+ " " +h.getValor()+ " " +h.getFechaHora());
             daoHD.crear(h);                    
         }  
         jTable1.setVisible(false);
+        SIbtn.setEnabled(false);
+        NObtn.setEnabled(false);
     }//GEN-LAST:event_enviarDatobtnActionPerformed
+
+    private void parcialbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parcialbtnActionPerformed
+        SIbtn.setEnabled(true);
+        NObtn.setEnabled(true);
+    }//GEN-LAST:event_parcialbtnActionPerformed
+
+    private void SIbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SIbtnActionPerformed
+        listaSI();
+        llenarProcsSI();
+    }//GEN-LAST:event_SIbtnActionPerformed
+
+    private void NObtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NObtnActionPerformed
+        lista();
+        llenarProcsNO();
+    }//GEN-LAST:event_NObtnActionPerformed
 
     /**
      * @param args the command line arguments
@@ -261,12 +415,16 @@ public class Principal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton NObtn;
+    private javax.swing.JButton SIbtn;
     private javax.swing.JButton enviarDatobtn;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JButton mostrarDatobtn;
+    private javax.swing.JPanel panel2;
     private javax.swing.JButton parcialbtn;
     // End of variables declaration//GEN-END:variables
 }

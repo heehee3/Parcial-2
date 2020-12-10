@@ -18,6 +18,24 @@ public class TipoSensor implements Serializable {
     public String nombre;
     public double minimo;
     public double maximo;
+    public String promedio;
+    public int numHoras;
+
+    public int getNumHoras() {
+        return numHoras;
+    }
+
+    public void setNumHoras(int numHoras) {
+        this.numHoras = numHoras;
+    }
+
+    public String getPromedio() {
+        return promedio;
+    }
+
+    public void setPromedio(String promedio) {
+        this.promedio = promedio;
+    }
 
     public TipoSensor() {
         

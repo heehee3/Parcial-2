@@ -14,7 +14,7 @@ import static javax.persistence.TemporalType.DATE;
  * @author Camilo
  */
 @Entity
-@Table(name="Historico")
+@Table(name="HistoricoD")
 public class HistoricoDatos implements Serializable{
     public int idsensor;
     public double valor;

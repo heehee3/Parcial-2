@@ -15,6 +15,15 @@ public class validarTS {
     public void verificarTS (TipoSensor ts){
     }
     public boolean verificarValor (double x){
-        return (x<34 || x>37.5);
+        return (x>30 && x<40);
+    }
+    public String verificarValorProc (double x){
+        if(x<34){
+            return "Alerta 1";
+        }else if(x>34 && x<37.5){
+            return "Alerta 2";
+        }else{
+            return "Alerta 3";
+        }
     }
 }
