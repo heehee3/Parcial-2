@@ -98,16 +98,11 @@ public class Principal extends javax.swing.JFrame {
             Class.forName("org.apache.derby.jdbc.ClientDriver");
             String url="jdbc:derby://localhost:1527/sensorAPP";
             Connection con= DriverManager.getConnection(url);
-            String query="SELECT AVG(VALOR) AS \"PROMEDIO\" FROM APP.HISTORICOD";
+            String query="SELECT AVG(VALOR) AS PROMEDIO FROM APP.HISTORICOD WHERE FECHAHORA BETWEEN '2020-12-09 18:32:13.480' AND CURRENT_TIMESTAMP";
             Statement st=con.createStatement();
             ResultSet rs= st.executeQuery(query);
-            while (rs.next()){                
-                String query1="SELECT AVG(VALOR) AS PROMEDIO FROM APP.HISTORICOD WHERE FECHAHORA BETWEEN '2020-12-09 18:32:13.480' AND CURRENT_TIMESTAMP";
-                    Statement st1=con.createStatement();
-                    ResultSet rs1= st1.executeQuery(query1);
-                    while(rs1.next()){
-                        prom= rs1.getDouble("PROMEDIO");
-                    }               
+            while (rs.next()){                                
+                prom= rs.getDouble("PROMEDIO");                                   
             }                
             
         } catch (Exception e) {
